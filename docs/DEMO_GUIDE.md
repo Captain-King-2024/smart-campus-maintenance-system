@@ -1,0 +1,44 @@
+# Classroom demo walkthrough
+
+Start with `npm ci` and `npm run dev`, then open http://localhost:3000.
+
+## Complete one new repair
+
+1. Sign in as **Student**. Open **Report an issue**.
+2. Enter a title and description, select **Electrical**, **Academic Block A**, a room, and a priority. Submit.
+3. Note the new CMP ID (on a fresh server it will be 13). Show the details and SUBMITTED timeline.
+4. Use **Switch demo role**, then choose **Maintenance Manager**.
+5. Open **All complaints**, search the title, and open the request.
+6. Mark **under review**. Assign **Ravi Kumar**. BUSY technicians can have multiple jobs in this demo.
+7. Switch to **Technician** (Ravi). Open **My assignments** and the new job.
+8. **Accept assignment**, then **Start work**. Add a meaningful work log and positive hours.
+9. Record an **Electrical socket** quantity of **1**. Show the material cost and reduced stock on Inventory.
+10. Optionally put the work **on hold**, then **resume**. Show the timeline.
+11. **Complete work**. Complaint becomes RESOLVED.
+12. Switch to **Student**, open the complaint, submit a rating and comment.
+13. Switch to **Maintenance Manager** and **Close complaint**.
+14. Show assignment history, work logs, materials, resolution timestamp and feedback.
+
+## Other useful demonstrations
+
+- Student and faculty see different complaint lists.
+- Try submitting an empty form or selecting an invalid value through an API client: validation runs on the server as well.
+- Student cannot open admin pages; APIs also enforce roles.
+- Admin → Departments → add a temporary department, edit it, and delete it.
+- Try deleting a referenced department: the service rejects the deletion.
+- Manager filters include technician/building; inventory highlights stock below 5.
+- Explain the 14 interfaces and open `repositories/postgres/` to show that your team still owns the database work.
+
+## Suggested screenshots
+
+1. Landing page and role chooser.
+2. Student dashboard and new complaint form.
+3. Manager dashboard and filtered complaint list.
+4. Complaint detail with technician assignment and timeline.
+5. Technician work log/material forms and completed job.
+6. Inventory showing low stock or material deduction.
+7. Reporter feedback after resolution.
+8. Admin directory table and create/edit form.
+9. Passing terminal test/build output.
+
+Use your own actual screenshots; the ZIP does not claim any screenshots as completed evidence. Restarting the server resets all records, so take workflow screenshots before stopping it.
