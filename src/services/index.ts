@@ -1,0 +1,13 @@
+import { repositories } from '@/repositories';
+import { ComplaintService } from './ComplaintService';
+import { AssignmentService } from './AssignmentService';
+import { InventoryService } from './InventoryService';
+import { FeedbackService } from './FeedbackService';
+import { TechnicianService } from './TechnicianService';
+import { AdminService } from './AdminService';
+export const complaints = new ComplaintService(repositories);
+export const assignments = new AssignmentService(repositories, complaints);
+export const inventory = new InventoryService(repositories);
+export const feedback = new FeedbackService(repositories);
+export const technicians = new TechnicianService(repositories);
+export const admin = new AdminService(repositories);
