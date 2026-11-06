@@ -9,10 +9,13 @@
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test tests/*.test.ts",
     "format": "prettier --write .",
-    "test:http": "node scripts/http-smoke.mjs"
+    "test:http": "node scripts/http-smoke.mjs",
+    "test:postgres": "node --import tsx --test tests/postgres.integration.ts",
+    "db:check": "node --env-file=.env.local scripts/db-check.mjs"
   },
   "dependencies": {
     "next": "16.4.3",
+    "pg": "^8.23.1",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "zod": "4.1.12"
@@ -20,6 +23,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "4.1.17",
     "@types/node": "24.10.0",
+    "@types/pg": "^8.23.1",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
     "prettier": "3.6.2",

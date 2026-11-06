@@ -231,7 +231,7 @@ test('admin CRUD validates unique fields, references, ownership and role', async
     department_code: 'PHY',
     department_type: 'ACADEMIC',
   });
-  assert('department_id' in d);
+  assert('department_id' in d && d.department_id !== null);
   await assert.rejects(
     () =>
       s.admin.save(s.root, 'departments', {

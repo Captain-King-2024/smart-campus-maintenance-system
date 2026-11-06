@@ -13,7 +13,7 @@ export class ComplaintService {
         (a) =>
           a.complaint_id === c.complaint_id &&
           a.technician_id === t?.technician_id &&
-          a.assignment_status !== 'CANCELLED',
+          !['CANCELLED', 'REASSIGNED'].includes(a.assignment_status),
       );
     }
     return c.reported_by === user.user_id;
@@ -36,7 +36,7 @@ export class ComplaintService {
             (a) =>
               a.complaint_id === c.complaint_id &&
               a.technician_id === Number(query.get('technician_id')) &&
-              a.assignment_status !== 'CANCELLED',
+              !['CANCELLED', 'REASSIGNED'].includes(a.assignment_status),
           ),
       )
       .filter(
@@ -79,23 +79,25 @@ export class ComplaintService {
       ).toISOString(),
       resolved_at: null,
     });
-    await this.r.history.create({
-      complaint_id: c.complaint_id,
-      changed_by: user.user_id,
-      old_status: null,
-      new_status: 'SUBMITTED',
-      changed_at: now.toISOString(),
-    });
+    if (!this.r.databaseManagedEffects)
+      await this.r.history.create({
+        complaint_id: c.complaint_id,
+        changed_by: user.user_id,
+        old_status: null,
+        new_status: 'SUBMITTED',
+        changed_at: now.toISOString(),
+      });
     return c;
   }
   async transition(user: User, c: Complaint, status: ComplaintStatus) {
-    await this.r.history.create({
-      complaint_id: c.complaint_id,
-      changed_by: user.user_id,
-      old_status: c.status,
-      new_status: status,
-      changed_at: new Date().toISOString(),
-    });
+    if (!this.r.databaseManagedEffects)
+      await this.r.history.create({
+        complaint_id: c.complaint_id,
+        changed_by: user.user_id,
+        old_status: c.status,
+        new_status: status,
+        changed_at: new Date().toISOString(),
+      });
     return this.r.complaints.update(c.complaint_id, {
       status,
       ...(status === 'RESOLVED' ? { resolved_at: new Date().toISOString() } : {}),

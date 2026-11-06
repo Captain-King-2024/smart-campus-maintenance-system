@@ -1,17 +1,17 @@
 # CampusCare
 
-Smart Campus Maintenance and Complaint Management System — an academic Next.js application with a working frontend, Route Handler APIs, five roles, and **in-memory repositories only**. All 14 entity interfaces match the supplied design. PostgreSQL implementation is reserved for students.
+Smart Campus Maintenance and Complaint Management System — an academic Next.js application with a working frontend, Route Handler APIs, five roles, and selectable **PostgreSQL or in-memory repositories**. All 14 entities are implemented. Follow [PostgreSQL setup](database/README.md) to initialize your database and enable persistent records.
 
 ## Start on Windows, macOS, or Linux
 
-Install Node.js 20.9+ (a current LTS version is recommended). Extract the ZIP, then open a terminal in `smart-campus`:
+Install Node.js 20.9+ (a current LTS version is recommended). Clone this repository or extract the ZIP, then open a terminal in the project root:
 
 ```bash
 npm ci
 npm run dev
 ```
 
-Open **http://localhost:3000**, select **Demo sign in**, then choose a role. Frontend and backend run together; no second server or database is needed. No `.env` file is required. If desired, copy `.env.example` to `.env.local` using your editor. The only supported provider is `mock`.
+Open **http://localhost:3000**, select **Demo sign in**, then choose a role. Frontend and backend run together; no second server or database is needed. No `.env` file is required. To enable persistence, copy `.env.example` to `.env.local`, set your `DATABASE_URL`, and follow [database/README.md](database/README.md). Set `DATA_PROVIDER=mock` to use the original in-memory demo.
 
 For a production build running locally:
 
@@ -24,7 +24,7 @@ Use `npm run dev` for a classroom demonstration over plain HTTP. Production cook
 
 ## Demo users
 
-No password is used. Select the corresponding card at `/login`; sessions are random, opaque server-side tokens in HttpOnly cookies and expire after 8 hours.
+No password is used. The chooser at `/login` loads the first active user of each role from the selected provider. The table below lists **mock-mode users**; PostgreSQL seed IDs and names are listed in [database setup](database/README.md). Sessions are random, opaque server-side tokens in HttpOnly cookies and expire after 8 hours.
 
 | ID  | Name          | Role                | Demo email        |
 | --- | ------------- | ------------------- | ----------------- |
@@ -36,7 +36,7 @@ No password is used. Select the corresponding card at `/login`; sessions are ran
 | 6   | Asha Patel    | TECHNICIAN          | asha@campus.demo  |
 | 7   | Imran Khan    | TECHNICIAN          | imran@campus.demo |
 
-The five cards cover IDs 1–5. IDs 6 and 7 are additional technician profiles; for API testing, `POST /api/auth/login` accepts their `user_id` too. Real authentication must replace the demo provider before public use. The demo login intentionally lets anyone select any role.
+In mock mode the five cards cover IDs 1–5. IDs 6 and 7 are additional technician profiles; for API testing, `POST /api/auth/login` accepts their `user_id` too. Real authentication must replace the demo provider before public use. The demo login intentionally lets anyone select any role.
 
 ## What works
 
@@ -122,7 +122,8 @@ API errors use 400 for invalid fields, 401 for missing session, 403 for role/own
 ## Folder structure
 
 ```text
-smart-campus/
+smart-campus-maintenance-system/
+  database/              # Supplied SQL, compatibility migration, setup guide
   src/
     app/                 # Public/protected pages and explicit api route.ts files
       api/
@@ -140,8 +141,8 @@ smart-campus/
     repositories/
       interfaces/        # Generic typed contracts + complaint-specific interface
       mock/              # Array-backed implementation
-      postgres/          # 14 TODO-only placeholder files
-      index.ts           # Repository composition / future replacement point
+      postgres/          # 14 PostgreSQL repositories + shared parameterized CRUD
+      index.ts           # Provider selection and mutation transaction boundary
     data/mock/seed.ts     # Realistic demonstration records
   tests/                 # Service workflow and authorization regression tests
   docs/
@@ -156,19 +157,17 @@ smart-campus/
 
 ## Architecture and database handoff
 
-Browser UI → Route Handler → Service → Repository interface → Mock repository.
+Browser UI → Route Handler → Service → Repository interface → selected provider.
 
-`src/repositories/index.ts` chooses the mock implementations. Students will implement the existing contracts inside `src/repositories/postgres/`, then change that composition point. Keep TypeScript response shapes unchanged and the frontend will continue to work.
+`DATA_PROVIDER=postgres` selects the pooled PostgreSQL implementation; an unset provider or `mock` selects the original in-memory demo. See [database/README.md](database/README.md) for SQL run order, environment settings and the exact seed login IDs. Your four original SQL files are preserved, with a separate compatibility migration for hold/resume.
 
-Cross-entity changes also need a database unit of work: assignment, inventory allocation, feedback uniqueness and status history must be transactional. The current mock mutex is not a replacement for PostgreSQL transactions. Decide whether the database trigger or service writes history so each transition is recorded exactly once. See `docs/DATABASE_TODO.md` for the full handoff checklist and `docs/ARCHITECTURE.md` for explanations.
-
-No database, SQL DDL, migrations, ORM models, database connection or database credentials are included.
+Mutations share one transaction and a transaction-scoped advisory lock across server processes. The database triggers own complaint history and inventory deduction. The backend retains validation and role/ownership checks. PostgreSQL data survives server restarts; demo sessions do not. Real credential authentication and durable sessions remain future work.
 
 ## Mock data lifecycle
 
 Data is initialized lazily from `src/data/mock/seed.ts`: 12 complaints across 4 buildings, 6 categories, 12 rooms, 7 users, 3 technicians, 2 teams and 5 inventory items, plus assignments, snapshot status history and work logs. New feedback and usage appear as you demonstrate the workflow. Restart the Node process to reset everything. Seed history is a concise demonstration snapshot; new complaint histories record each action.
 
-The mock state and sessions live only in a **single Node process**. They are shared by browser sessions on that process, disappear on restart, and are unsuitable for serverless instances or multiple workers. Only run one server for a demo. No localStorage or disk database is used. Disabling a user ends their effective access; inactive teams cannot receive new assignments. BUSY technicians can receive additional work; OFF_DUTY technicians cannot. Low stock means fewer than 5 units. Availability returns to AVAILABLE when all active jobs finish.
+In mock mode, the state and sessions live only in a **single Node process**. They are shared by browser sessions on that process, disappear on restart, and are unsuitable for serverless instances or multiple workers. Only run one server for a demo. No localStorage or disk database is used. Disabling a user ends their effective access; inactive teams cannot receive new assignments. BUSY technicians can receive additional work; OFF_DUTY technicians cannot. Low stock means fewer than 5 units. Availability returns to AVAILABLE when all active jobs finish.
 
 Admin user creation maintains User records only; creating a technician login does not automatically create a Technician profile or change the entity design. The supplied mock technician profiles support the demonstration. Real account onboarding and technician provisioning are future integration work.
 
@@ -182,4 +181,4 @@ npm run build
 
 With `npm run dev` running in a separate terminal, use `node scripts/http-smoke.mjs` to repeat the HTTP workflow checks. Override `SMOKE_BASE_URL` if using another port. The script creates one demo complaint and department and checks all roles.
 
-`npm test` exercises real service behavior with isolated fresh mock stores. See `docs/VERIFICATION.md` for the actual verification record and limitations, and `docs/DEMO_GUIDE.md` for a presentation walkthrough.
+`npm test` exercises real service behavior with isolated fresh mock stores. See `docs/VERIFICATION.md` for the verification record and PostgreSQL test instructions, and `docs/DEMO_GUIDE.md` for a presentation walkthrough.

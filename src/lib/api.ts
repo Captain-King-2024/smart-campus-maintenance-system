@@ -4,9 +4,9 @@ import { z } from 'zod';
 import { AppError, check } from './errors';
 import { requireUser, auth, login, logout } from './auth';
 import { home, allow, workers } from './permissions';
-import { serialize } from './mutation-lock';
+import { databaseError } from './database';
 import { complaints, assignments, inventory, feedback, technicians, admin } from '@/services';
-import { repositories } from '@/repositories';
+import { repositories, runMutation } from '@/repositories';
 import { ReferenceService } from '@/services/ReferenceService';
 import { adminSchemas } from './validation';
 import type { AdminEntity } from '@/services/AdminService';
@@ -172,8 +172,11 @@ export async function handle(req: Request) {
       await logout();
       return ok({ loggedOut: true });
     }
-    return req.method === 'GET' ? await dispatch(req) : await serialize(() => dispatch(req));
-  } catch (error) {
+    if (req.method === 'GET') return await dispatch(req);
+    const actor = await requireUser();
+    return await runMutation(actor.user_id, () => dispatch(req));
+  } catch (caught) {
+    const error = databaseError(caught) ?? caught;
     if (error instanceof ZodError)
       return NextResponse.json(
         {

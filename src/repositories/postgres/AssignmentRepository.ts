@@ -1,4 +1,6 @@
-// TODO: Students will implement PostgreSQL data access for Assignment here.
-// Implement Repository contracts, preserve API types and enforce database constraints.
-// No connection, SQL, ORM, or migration is implemented in this file.
-export {};
+import { PostgresRepository } from './PostgresRepository';
+export class AssignmentRepository extends PostgresRepository<'assignments'> {
+  constructor() {
+    super('assignments');
+  }
+}

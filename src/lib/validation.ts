@@ -1,11 +1,11 @@
 import { z } from 'zod';
 import { priorities, roles, statuses } from '@/types/models';
 const id = z.number().int().positive();
-const name = z.string().trim().min(1).max(160);
+const name = z.string().trim().min(1).max(100);
 const text = z.string().trim().min(1).max(4000);
 export const complaintInput = z
   .object({
-    title: name,
+    title: z.string().trim().min(1).max(150),
     description: text,
     category_id: id,
     building_id: id,
@@ -29,7 +29,7 @@ export const workLogInput = z
   })
   .strict();
 export const materialInput = z
-  .object({ complaint_id: id, item_id: id, quantity_used: z.number().positive().max(100000) })
+  .object({ complaint_id: id, item_id: id, quantity_used: z.number().int().positive().max(100000) })
   .strict();
 export const feedbackInput = z
   .object({
@@ -42,36 +42,36 @@ export const adminSchemas = {
   users: z
     .object({
       department_id: id,
-      email: z.email().max(200),
+      email: z.email().max(150),
       name,
       role: z.enum(roles),
-      status: z.enum(['ACTIVE', 'INACTIVE']),
+      status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED']),
     })
     .strict(),
   departments: z
-    .object({ department_name: name, department_code: name, department_type: name })
+    .object({ department_name: name, department_code: name.max(20), department_type: name.max(50) })
     .strict(),
   buildings: z
     .object({
       building_name: name,
-      building_code: name,
-      building_type: name,
-      number_of_floors: z.number().int().min(0).max(200),
+      building_code: name.max(20),
+      building_type: name.max(50),
+      number_of_floors: z.number().int().min(1).max(200),
     })
     .strict(),
   rooms: z
     .object({
       building_id: id,
-      room_number: name,
+      room_number: name.max(20),
       floor_number: z.number().int().min(0).max(200),
-      room_type: name,
+      room_type: name.max(50),
     })
     .strict(),
   categories: z
     .object({
       category_name: name,
       default_priority: z.enum(priorities),
-      expected_resolution_hours: z.number().positive().max(8760),
+      expected_resolution_hours: z.number().int().positive().max(8760),
     })
     .strict(),
   teams: z

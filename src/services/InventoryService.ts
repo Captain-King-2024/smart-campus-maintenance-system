@@ -24,11 +24,12 @@ export class InventoryService {
     const item = await this.r.inventory.findById(data.item_id);
     check(item, 'Unknown inventory item');
     check(item.quantity_available >= data.quantity_used, 'Insufficient inventory stock', 409);
-    // DATABASE TODO: replace both writes with ONE PostgreSQL transaction and row lock.
+    // PostgreSQL material trigger owns stock deduction; the request transaction owns atomicity.
     // Unit price comes from inventory, never from client input. Mock requests are serialized.
-    await this.r.inventory.update(item.item_id, {
-      quantity_available: item.quantity_available - data.quantity_used,
-    });
+    if (!this.r.databaseManagedEffects)
+      await this.r.inventory.update(item.item_id, {
+        quantity_available: item.quantity_available - data.quantity_used,
+      });
     return this.r.materials.create({
       ...data,
       technician_id: t.technician_id,

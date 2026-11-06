@@ -2,45 +2,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { api } from './api-client';
-const demos = [
-  {
-    id: 1,
-    name: 'Anku Sharma',
-    role: 'Student',
-    description: 'Report and track campus issues',
-    icon: 'S',
-  },
-  {
-    id: 2,
-    name: 'Dr. Meera Rao',
-    role: 'Faculty',
-    description: 'Keep teaching spaces working',
-    icon: 'F',
-  },
-  {
-    id: 3,
-    name: 'Ravi Kumar',
-    role: 'Technician',
-    description: 'Manage assigned repairs',
-    icon: 'T',
-  },
-  {
-    id: 4,
-    name: 'Priya Nair',
-    role: 'Maintenance Manager',
-    description: 'Review, assign, and coordinate',
-    icon: 'M',
-  },
-  {
-    id: 5,
-    name: 'Campus Admin',
-    role: 'Admin',
-    description: 'Manage the campus directory',
-    icon: 'A',
-  },
-];
-export function Login() {
-  const [selected, setSelected] = useState(1);
+export function Login({
+  demos,
+  persistent,
+}: {
+  demos: { id: number; name: string; role: string; description: string; icon: string }[];
+  persistent: boolean;
+}) {
+  const [selected, setSelected] = useState(demos[0]?.id ?? 0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   async function submit() {
@@ -116,12 +85,15 @@ export function Login() {
             {error}
           </p>
         )}
-        <button className="button full" disabled={busy} onClick={submit}>
+        <button className="button full" disabled={busy || !selected} onClick={submit}>
           {busy ? 'Opening workspace…' : 'Enter workspace →'}
         </button>
         <p className="demo-note">
-          Demo authentication — no passwords required. Data resets when the server restarts. Use
-          locally for your project demonstration.
+          Demo authentication — no passwords required.{' '}
+          {persistent
+            ? 'Records are saved in PostgreSQL.'
+            : 'Data resets when the server restarts.'}{' '}
+          Use locally for your project demonstration.
         </p>
       </section>
     </main>

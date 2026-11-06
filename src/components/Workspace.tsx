@@ -448,7 +448,9 @@ export function Workspace({ user, path }: { user: User; path: string }) {
             </div>
             {tech ? (
               <AssignmentTable
-                jobs={jobs.filter((a) => a.assignment_status !== 'CANCELLED').slice(0, 6)}
+                jobs={jobs
+                  .filter((a) => !['CANCELLED', 'REASSIGNED'].includes(a.assignment_status))
+                  .slice(0, 6)}
                 catalog={catalog}
               />
             ) : (
@@ -814,7 +816,9 @@ function ComplaintDetail({
   const manager = ['ADMIN', 'MAINTENANCE_MANAGER'].includes(user.role);
   const tech = user.role === 'TECHNICIAN';
   const a = data.assignment;
-  const active = jobs.find((j) => !['CANCELLED', 'COMPLETED'].includes(j.assignment_status));
+  const active = jobs.find(
+    (j) => !['CANCELLED', 'COMPLETED', 'REASSIGNED'].includes(j.assignment_status),
+  );
   const [busy, setBusy] = useState(false);
   const [localError, setLocalError] = useState('');
   const [stock, setStock] = useState<InventoryItem[]>([]);
@@ -967,7 +971,7 @@ function ComplaintDetail({
                       {catalog.technicians
                         .filter(
                           (t) =>
-                            t.availability_status !== 'OFF_DUTY' &&
+                            !['OFF_DUTY', 'ON_LEAVE'].includes(t.availability_status) &&
                             t.technician_id !== active?.technician_id,
                         )
                         .map((t) => (
@@ -1093,7 +1097,7 @@ function ComplaintDetail({
                         type="number"
                         min="0.01"
                         max="100000"
-                        step="0.01"
+                        step="1"
                         required
                       />
                     </Field>
@@ -1302,6 +1306,7 @@ function AdminScreen({
         ? [
             ['ACTIVE', 'Active'],
             ['INACTIVE', 'Inactive'],
+            ...(entity === 'users' ? [['SUSPENDED', 'Suspended'] as [string, string]] : []),
           ]
         : field === 'default_priority'
           ? priorities.map((p) => [p, label(p)])
@@ -1391,7 +1396,7 @@ function AdminScreen({
                           ? 8760
                           : undefined
                     }
-                    step={k === 'expected_resolution_hours' ? '0.01' : '1'}
+                    step="1"
                     maxLength={k === 'email' ? 200 : 160}
                     defaultValue={editing?.[k] ?? ''}
                   />

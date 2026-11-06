@@ -16,7 +16,7 @@ export const primaryKeys = {
   feedback: 'feedback_id',
 } as const;
 export type NewRow<K extends Entity> = Omit<EntityMap[K], (typeof primaryKeys)[K]>;
-/** DATABASE TODO: student-authored data access must satisfy this contract. */
+/** Shared contract implemented by mock and PostgreSQL providers. */
 export interface Repository<K extends Entity> {
   findAll(): Promise<EntityMap[K][]>;
   findById(id: number): Promise<EntityMap[K] | null>;
@@ -24,4 +24,4 @@ export interface Repository<K extends Entity> {
   update(id: number, data: Partial<EntityMap[K]>): Promise<EntityMap[K]>;
   remove(id: number): Promise<void>;
 }
-export type Repositories = { [K in Entity]: Repository<K> };
+export type Repositories = { [K in Entity]: Repository<K> } & { databaseManagedEffects?: boolean };

@@ -79,8 +79,9 @@ export class ReferenceService {
       available: ts.filter((t) => t.availability_status === 'AVAILABLE').length,
       busy: ts.filter((t) => t.availability_status === 'BUSY').length,
       lowStock: inv.filter((i) => i.quantity_available < 5),
-      assigned: jobs.filter((a) => !['CANCELLED', 'COMPLETED'].includes(a.assignment_status))
-        .length,
+      assigned: jobs.filter(
+        (a) => !['CANCELLED', 'COMPLETED', 'REASSIGNED'].includes(a.assignment_status),
+      ).length,
       working: jobs.filter((a) => a.assignment_status === 'IN_PROGRESS').length,
       completed: jobs.filter((a) => a.assignment_status === 'COMPLETED').length,
       recent: rows.slice(0, 6),

@@ -45,7 +45,7 @@ export default function Landing() {
       </section>
       <footer>
         SMART CAMPUS MAINTENANCE & COMPLAINT MANAGEMENT SYSTEM{' '}
-        <span>Academic demo · In-memory data</span>
+        <span>Academic campus maintenance demo</span>
       </footer>
     </main>
   );

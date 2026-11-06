@@ -21,17 +21,17 @@ export interface Department {
 }
 export interface User {
   user_id: number;
-  department_id: number;
+  department_id: number | null;
   email: string;
   name: string;
   role: Role;
-  status: 'ACTIVE' | 'INACTIVE';
+  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
 }
 export interface Building {
   building_id: number;
   building_name: string;
   building_code: string;
-  building_type: string;
+  building_type: string | null;
   number_of_floors: number;
 }
 export interface Room {
@@ -39,7 +39,7 @@ export interface Room {
   building_id: number;
   room_number: string;
   floor_number: number;
-  room_type: string;
+  room_type: string | null;
 }
 export interface ComplaintCategory {
   category_id: number;
@@ -58,7 +58,7 @@ export interface Complaint {
   priority: Priority;
   status: ComplaintStatus;
   reported_at: string;
-  expected_resolution_at: string;
+  expected_resolution_at: string | null;
   resolved_at: string | null;
 }
 export interface ComplaintStatusHistory {
@@ -71,9 +71,9 @@ export interface ComplaintStatusHistory {
 }
 export interface MaintenanceTeam {
   team_id: number;
-  manager_id: number;
+  manager_id: number | null;
   team_name: string;
-  specialization: string;
+  specialization: string | null;
   status: 'ACTIVE' | 'INACTIVE';
 }
 export interface Technician {
@@ -81,9 +81,9 @@ export interface Technician {
   user_id: number;
   team_id: number;
   employee_code: string;
-  specialization: string;
-  availability_status: 'AVAILABLE' | 'BUSY' | 'OFF_DUTY';
-  experience_years: number;
+  specialization: string | null;
+  availability_status: 'AVAILABLE' | 'BUSY' | 'OFF_DUTY' | 'ON_LEAVE';
+  experience_years: number | null;
 }
 export interface ComplaintAssignment {
   assignment_id: number;
@@ -99,7 +99,8 @@ export interface ComplaintAssignment {
     | 'IN_PROGRESS'
     | 'ON_HOLD'
     | 'COMPLETED'
-    | 'CANCELLED';
+    | 'CANCELLED'
+    | 'REASSIGNED';
 }
 export interface WorkLog {
   work_log_id: number;
@@ -131,7 +132,7 @@ export interface Feedback {
   user_id: number;
   technician_id: number;
   rating: number;
-  comments: string;
+  comments: string | null;
   submitted_at: string;
 }
 export interface EntityMap {

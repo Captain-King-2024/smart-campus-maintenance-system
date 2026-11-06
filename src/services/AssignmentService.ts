@@ -26,11 +26,11 @@ export class AssignmentService {
   }
   async refreshAvailability(technician_id: number) {
     const t = await this.r.technicians.findById(technician_id);
-    if (t?.availability_status === 'OFF_DUTY') return;
+    if (t && ['OFF_DUTY', 'ON_LEAVE'].includes(t.availability_status)) return;
     const active = (await this.r.assignments.findAll()).some(
       (a) =>
         a.technician_id === technician_id &&
-        !['CANCELLED', 'COMPLETED'].includes(a.assignment_status),
+        !['CANCELLED', 'COMPLETED', 'REASSIGNED'].includes(a.assignment_status),
     );
     await this.r.technicians.update(technician_id, {
       availability_status: active ? 'BUSY' : 'AVAILABLE',
@@ -47,7 +47,7 @@ export class AssignmentService {
     );
     const t = await this.r.technicians.findById(data.technician_id);
     check(t, 'Unknown technician');
-    check(t.availability_status !== 'OFF_DUTY', 'Technician is off duty', 409);
+    check(!['OFF_DUTY', 'ON_LEAVE'].includes(t.availability_status), 'Technician is off duty', 409);
     const tu = await this.r.users.findById(t.user_id);
     const team = await this.r.teams.findById(t.team_id);
     check(
@@ -58,7 +58,7 @@ export class AssignmentService {
     const previous = (await this.r.assignments.findAll()).filter(
       (a) =>
         a.complaint_id === c.complaint_id &&
-        !['COMPLETED', 'CANCELLED'].includes(a.assignment_status),
+        !['COMPLETED', 'CANCELLED', 'REASSIGNED'].includes(a.assignment_status),
     );
     check(
       !previous.some((a) => a.technician_id === t.technician_id),
@@ -69,6 +69,9 @@ export class AssignmentService {
       await this.r.assignments.update(a.assignment_id, { assignment_status: 'CANCELLED' });
       await this.refreshAvailability(a.technician_id);
     }
+    if (this.r.databaseManagedEffects && c.status === 'IN_PROGRESS') {
+      await this.complaints.transition(user, c, 'ON_HOLD');
+    }
     const a = await this.r.assignments.create({
       ...data,
       assigned_by: user.user_id,
@@ -78,7 +81,7 @@ export class AssignmentService {
       assignment_status: 'ASSIGNED',
     });
     await this.refreshAvailability(t.technician_id);
-    await this.complaints.transition(user, c, 'ASSIGNED');
+    if (!this.r.databaseManagedEffects) await this.complaints.transition(user, c, 'ASSIGNED');
     return a;
   }
   async acceptAssignment(user: User, a: ComplaintAssignment) {
@@ -92,7 +95,7 @@ export class AssignmentService {
       409,
     );
     const c = await this.complaints.get(user, a.complaint_id);
-    await this.complaints.transition(user, c, 'IN_PROGRESS');
+    if (!this.r.databaseManagedEffects) await this.complaints.transition(user, c, 'IN_PROGRESS');
     return this.r.assignments.update(a.assignment_id, {
       assignment_status: 'IN_PROGRESS',
       started_at: a.started_at ?? new Date().toISOString(),
@@ -106,7 +109,7 @@ export class AssignmentService {
       409,
     );
     const c = await this.complaints.get(user, a.complaint_id);
-    await this.complaints.transition(user, c, 'RESOLVED');
+    if (!this.r.databaseManagedEffects) await this.complaints.transition(user, c, 'RESOLVED');
     const out = await this.r.assignments.update(a.assignment_id, {
       assignment_status: 'COMPLETED',
       completed_at: new Date().toISOString(),

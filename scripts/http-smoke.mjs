@@ -37,11 +37,12 @@ await call('/');
 await call('/login');
 await call('/api/complaints', { expected: 401 });
 await call('/dashboard', { expected: 307 });
-const student = await login(1);
-const faculty = await login(2);
-const tech = await login(3);
-const manager = await login(4);
-const admin = await login(5);
+const pg = process.env.DATA_PROVIDER === 'postgres';
+const student = await login(pg ? 12 : 1);
+const faculty = await login(pg ? 16 : 2);
+const tech = await login(pg ? 4 : 3);
+const manager = await login(pg ? 2 : 4);
+const admin = await login(pg ? 1 : 5);
 for (const [cookie, paths] of [
   [student, ['/dashboard', '/complaints', '/complaints/new']],
   [faculty, ['/dashboard']],
@@ -120,7 +121,7 @@ const job = (
 ).data;
 await call('/technician/assignments/' + job.assignment_id, { cookie: tech });
 await call('/manager/complaints/' + c.complaint_id, { cookie: manager });
-for (const action of ['accept', 'start'])
+for (const action of ['accept', 'start', 'hold', 'start'])
   await call('/api/assignments/' + job.assignment_id, {
     method: 'PATCH',
     cookie: tech,
